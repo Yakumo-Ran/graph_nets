@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 from torch_geometric.nn import MessagePassing
 from torch_geometric.utils import add_self_loops, degree
-
+import time
 
 #### Loading the Dataset ####
 dataset = Planetoid(root='/tmp/Cora', name='Cora')
@@ -51,9 +51,9 @@ class Net(torch.nn.Module):
 
 
 nfeat=dataset.num_node_features
-nhid=16
+nhid=128
 nclass=dataset.num_classes
-dropout=0.5
+dropout=0.0
 
 
 #### Training ####
@@ -62,17 +62,20 @@ model = Net(nfeat, nhid, nclass, dropout).to(device)
 data = dataset[0].to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
 
+start = time.time()
 model.train()
-for epoch in range(200):
+for epoch in range(60):
     optimizer.zero_grad()
     out = model(data)
     loss = F.nll_loss(out[data.train_mask], data.y[data.train_mask])
     loss.backward()
     optimizer.step()
+end = time.time()
 
-
+period = end - start
 model.eval()
 _, pred = model(data).max(dim=1)
 correct = float (pred[data.test_mask].eq(data.y[data.test_mask]).sum().item())
 acc = correct / data.test_mask.sum().item()
 print('Accuracy: {:.4f}'.format(acc))
+print('time period', period)
